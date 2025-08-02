@@ -166,16 +166,26 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         wrapper.appendChild(addBtn);
         wrapper.appendChild(document.createElement('br'));
-        // Add game mode radio buttons
+        // Add game mode radio buttons in vertical layout with inline descriptions
         const modeDiv = document.createElement('div');
         modeDiv.style.margin = '10px 0';
         modeDiv.style.display = 'flex';
-        modeDiv.style.alignItems = 'center';
-        modeDiv.style.justifyContent = 'center';
+        modeDiv.style.flexDirection = 'column';
+        modeDiv.style.alignItems = 'flex-start';
+        modeDiv.style.justifyContent = 'flex-start';
+        modeDiv.style.gap = '8px';
+
+        // Title
         const modeLabel = document.createElement('span');
         modeLabel.textContent = 'Play to:';
-        modeLabel.style.marginRight = '8px';
+        modeLabel.style.fontWeight = 'bold';
+        modeLabel.style.marginBottom = '6px';
         modeDiv.appendChild(modeLabel);
+
+        // Win mode radio and label (with description inline)
+        const winRow = document.createElement('div');
+        winRow.style.display = 'flex';
+        winRow.style.alignItems = 'center';
         const winRadio = document.createElement('input');
         winRadio.type = 'radio';
         winRadio.name = 'gameMode';
@@ -184,8 +194,17 @@ document.addEventListener('DOMContentLoaded', function() {
         winRadio.checked = true;
         const winLabel = document.createElement('label');
         winLabel.htmlFor = 'gameModeWin';
-        winLabel.textContent = 'Win';
-        winLabel.style.marginRight = '12px';
+        winLabel.textContent = 'Win (Winner progresses)';
+        winLabel.style.marginLeft = '6px';
+        winLabel.style.fontWeight = '500';
+        winRow.appendChild(winRadio);
+        winRow.appendChild(winLabel);
+        modeDiv.appendChild(winRow);
+
+        // Lose mode radio and label (with description inline)
+        const loseRow = document.createElement('div');
+        loseRow.style.display = 'flex';
+        loseRow.style.alignItems = 'center';
         const loseRadio = document.createElement('input');
         loseRadio.type = 'radio';
         loseRadio.name = 'gameMode';
@@ -193,11 +212,12 @@ document.addEventListener('DOMContentLoaded', function() {
         loseRadio.value = 'loser';
         const loseLabel = document.createElement('label');
         loseLabel.htmlFor = 'gameModeLose';
-        loseLabel.textContent = 'Lose';
-        modeDiv.appendChild(winRadio);
-        modeDiv.appendChild(winLabel);
-        modeDiv.appendChild(loseRadio);
-        modeDiv.appendChild(loseLabel);
+        loseLabel.textContent = 'Lose (Loser progresses)';
+        loseLabel.style.marginLeft = '6px';
+        loseLabel.style.fontWeight = '500';
+        loseRow.appendChild(loseRadio);
+        loseRow.appendChild(loseLabel);
+        modeDiv.appendChild(loseRow);
         wrapper.appendChild(modeDiv);
         const startBtn = document.createElement('button');
         startBtn.textContent = 'Begin Tournament';
