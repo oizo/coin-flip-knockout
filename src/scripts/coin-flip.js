@@ -119,7 +119,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let initialPlayers = prevNames.length > 0 ? prevNames.length : 4;
     function renderPlayerFields() {
         function getCurrentInputValues() {
-            const oldInputs = playerNamesArea.querySelectorAll('input');
+            // Only select text inputs for player names
+            const oldInputs = playerNamesArea.querySelectorAll('input[type="text"]');
             return Array.from(oldInputs).map((inp, idx) => inp ? inp.value : playerFields[idx]);
         }
         playerNamesArea.innerHTML = '';
@@ -165,14 +166,51 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         wrapper.appendChild(addBtn);
         wrapper.appendChild(document.createElement('br'));
+        // Add game mode radio buttons
+        const modeDiv = document.createElement('div');
+        modeDiv.style.margin = '10px 0';
+        modeDiv.style.display = 'flex';
+        modeDiv.style.alignItems = 'center';
+        modeDiv.style.justifyContent = 'center';
+        const modeLabel = document.createElement('span');
+        modeLabel.textContent = 'Play to:';
+        modeLabel.style.marginRight = '8px';
+        modeDiv.appendChild(modeLabel);
+        const winRadio = document.createElement('input');
+        winRadio.type = 'radio';
+        winRadio.name = 'gameMode';
+        winRadio.id = 'gameModeWin';
+        winRadio.value = 'winner';
+        winRadio.checked = true;
+        const winLabel = document.createElement('label');
+        winLabel.htmlFor = 'gameModeWin';
+        winLabel.textContent = 'Win';
+        winLabel.style.marginRight = '12px';
+        const loseRadio = document.createElement('input');
+        loseRadio.type = 'radio';
+        loseRadio.name = 'gameMode';
+        loseRadio.id = 'gameModeLose';
+        loseRadio.value = 'loser';
+        const loseLabel = document.createElement('label');
+        loseLabel.htmlFor = 'gameModeLose';
+        loseLabel.textContent = 'Lose';
+        modeDiv.appendChild(winRadio);
+        modeDiv.appendChild(winLabel);
+        modeDiv.appendChild(loseRadio);
+        modeDiv.appendChild(loseLabel);
+        wrapper.appendChild(modeDiv);
         const startBtn = document.createElement('button');
         startBtn.textContent = 'Begin Tournament';
         startBtn.type = 'button';
         startBtn.onclick = function() {
-            const inputs = wrapper.querySelectorAll('input');
+            // Only select text inputs for player names
+            const inputs = wrapper.querySelectorAll('input[type="text"]');
             players = Array.from(inputs).map(inp => inp.value.trim() || inp.placeholder);
             localStorage.setItem('coinFlipPlayerNames_dynamic', JSON.stringify(players));
             playerNamesArea.innerHTML = '';
+            // Store game mode in a variable
+            const selectedMode = wrapper.querySelector('input[name="gameMode"]:checked').value;
+            window.coinFlipGameMode = selectedMode;
             startTournament();
         };
         wrapper.appendChild(startBtn);
@@ -252,10 +290,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 nextRoundPlayers.push(roundPlayers[roundPlayers.length - 1]);
             }
             if (nextRoundPlayers.length === 1) {
-                resultDiv.textContent = `🏆 Winner: ${nextRoundPlayers[0]}!`;
-                coin.style.display = 'none';
-                showFireworks();
+                // Delay winner/loser announcement until after coin flip animation
+                setTimeout(() => {
+                    const mode = window.coinFlipGameMode || 'winner';
+                    if (mode === 'winner') {
+                        resultDiv.textContent = `🏆 Winner: ${nextRoundPlayers[0]}!`;
+                        coin.style.display = 'none';
+                        showFireworks();
+                    } else {
+                        resultDiv.textContent = `💀 Loser: ${nextRoundPlayers[0]}!`;
+                        coin.style.display = 'none';
+                        // For Lose mode, just show the result message, no animation
+                    }
+                }, 700); // Match coin flip animation duration
                 return;
+    // Humorous sad panda animation for Lose mode
             }
             round++;
             roundPlayers = nextRoundPlayers;
@@ -273,19 +322,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function promptSideSelectionForMatch(matchIdx) {
-        let chooserIdx = matchIdx + (Math.random() < 0.5 ? 0 : 1);
-        let chooser = roundPlayers[chooserIdx];
-        let opponent = roundPlayers[matchIdx + (chooserIdx === matchIdx ? 1 : 0)];
+        // First player always chooses
+        let chooser = roundPlayers[matchIdx];
+        let opponent = roundPlayers[matchIdx + 1];
         resultDiv.innerHTML = `${chooser} select: <br>` +
             `<button id="chooseHeads">Heads</button> <button id="chooseTails">Tails</button>`;
         coin.onclick = null;
         document.getElementById('chooseHeads').onclick = function() {
             selectedSide = 'heads';
-            playMatch(matchIdx, chooserIdx);
+            playMatch(matchIdx, matchIdx);
         };
         document.getElementById('chooseTails').onclick = function() {
             selectedSide = 'tails';
-            playMatch(matchIdx, chooserIdx);
+            playMatch(matchIdx, matchIdx);
         };
     }
 
@@ -307,25 +356,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 showCoin(isHeads ? 'heads' : 'tails');
                 let chooser = roundPlayers[chooserIdx];
                 let opponent = roundPlayers[matchIdx + (chooserIdx === matchIdx ? 1 : 0)];
-                let winner;
-                if ((selectedSide === 'heads' && isHeads) || (selectedSide === 'tails' && !isHeads)) {
-                    winner = chooser;
+                let progresses;
+                const mode = window.coinFlipGameMode || 'winner';
+                if (mode === 'winner') {
+                    // Winner of toss progresses
+                    progresses = (selectedSide === 'heads' && isHeads) || (selectedSide === 'tails' && !isHeads) ? chooser : opponent;
                 } else {
-                    winner = opponent;
+                    // Loser of toss progresses
+                    progresses = (selectedSide === 'heads' && isHeads) || (selectedSide === 'tails' && !isHeads) ? opponent : chooser;
                 }
-                resultDiv.innerHTML = `${winner} won!</b>`;
                 coin.classList.remove('flipping');
-                if (nextRoundPlayers.length < Math.ceil(roundPlayers.length/2)) {
-                    nextRoundPlayers.push(winner);
-                }
-                if (bracketHistory[round-1] && bracketHistory[round-1][Math.floor(matchIdx/2)]) {
-                    bracketHistory[round-1][Math.floor(matchIdx/2)].winner = winner;
-                }
-                showBracket();
-                currentMatch += 2;
+                // Show coin result, then delay before announcing winner/loser
                 setTimeout(() => {
-                    showNextMatch();
-                }, 2000);
+                    if (mode === 'winner') {
+                        resultDiv.innerHTML = `${progresses} won!</b>`;
+                    } else {
+                        resultDiv.innerHTML = `${progresses} lost and progresses!`;
+                    }
+                    if (nextRoundPlayers.length < Math.ceil(roundPlayers.length/2)) {
+                        nextRoundPlayers.push(progresses);
+                    }
+                    if (bracketHistory[round-1] && bracketHistory[round-1][Math.floor(matchIdx/2)]) {
+                        bracketHistory[round-1][Math.floor(matchIdx/2)].winner = progresses;
+                    }
+                    currentMatch += 2;
+                    setTimeout(() => {
+                        showBracket();
+                        showNextMatch();
+                    }, 2000);
+                }, 1800); // Increased delay after coin stops before showing result
             }
         }, interval);
     }
