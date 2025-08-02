@@ -1,0 +1,39 @@
+<svg id="animated-coin" width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="copper-gradient" cx="50%" cy="60%" r="60%">
+      <stop offset="0%" stop-color="#FFDAB9"/>
+      <stop offset="60%" stop-color="#B87333"/>
+      <stop offset="100%" stop-color="#8B4513"/>
+    </radialGradient>
+    <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFDAB9"/>
+      <stop offset="100%" stop-color="#8B4513"/>
+    </linearGradient>
+  </defs>
+  <style>
+    #animated-coin .coin {
+      transform-origin: 50% 50%;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
+    }
+    #animated-coin .crown {
+      animation: crown-bounce 1s ease-in-out infinite;
+    }
+    @keyframes crown-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+  </style>
+  <g class="coin">
+    <circle cx="50" cy="60" r="32" fill="url(#copper-gradient)" stroke="url(#edge-gradient)" stroke-width="6"/>
+    <ellipse cx="50" cy="60" rx="28" ry="12" fill="rgba(255,255,255,0.18)"/>
+    <text x="50" y="70" text-anchor="middle" font-size="28" fill="#8B4513" font-family="Arial" font-weight="bold">H/T</text>
+  </g>
+  <g class="crown">
+    <polygon points="38,38 50,18 62,38" fill="#FFDAB9" stroke="#8B4513" stroke-width="3"/>
+    <rect x="44" y="38" width="12" height="8" fill="#8B4513" rx="3"/>
+  </g>
+</svg>
