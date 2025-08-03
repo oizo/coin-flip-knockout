@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const coin = document.getElementById('coin');
     const resultDiv = document.getElementById('result');
-    const playerNamesArea = document.getElementById('playerNamesArea');
+    const configArea = document.getElementById('playerNamesArea'); // Rename for clarity
     const tournamentArea = document.getElementById('tournamentArea');
 
     const headsSVG = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -112,23 +112,42 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMatch = 0;
     let roundPlayers = [];
     let playerFields = [];
-    let prevNames = [];
-    try {
-        prevNames = JSON.parse(localStorage.getItem('coinFlipPlayerNames_dynamic')) || [];
-    } catch {}
-    let initialPlayers = prevNames.length > 0 ? prevNames.length : 4;
+let prevNames = [];
+try {
+    prevNames = JSON.parse(localStorage.getItem('coinFlipPlayerNames_dynamic')) || [];
+} catch {}
+let initialPlayers = prevNames.length > 0 ? prevNames.length : 4;
     function renderPlayerFields() {
+        // Hide resultDiv during config UI
+        resultDiv.style.display = 'none';
         function getCurrentInputValues() {
             // Only select text inputs for player names
             const oldInputs = playerNamesArea.querySelectorAll('input[type="text"]');
             return Array.from(oldInputs).map((inp, idx) => inp ? inp.value : playerFields[idx]);
         }
-        playerNamesArea.innerHTML = '';
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.justifyContent = 'center';
+        configArea.innerHTML = '';
+
+        // Player entry title
+        const playerTitle = document.createElement('span');
+        playerTitle.textContent = 'Players:';
+        playerTitle.style.fontWeight = 'bold';
+        playerTitle.style.fontSize = '1.1em';
+        playerTitle.style.marginBottom = '6px';
+        playerTitle.style.display = 'block';
+        playerTitle.style.width = '100%';
+        playerTitle.style.textAlign = 'left';
+        configArea.appendChild(playerTitle);
+
+        // Player entry body styling
+        const playerBody = document.createElement('div');
+        playerBody.style.background = 'rgba(240,245,255,0.7)';
+        playerBody.style.border = '1px solid #c3d0e8';
+        playerBody.style.borderRadius = '7px';
+        playerBody.style.padding = '12px 16px 10px 16px';
+        playerBody.style.marginBottom = '16px';
+        playerBody.style.width = '100%';
+        playerBody.style.boxSizing = 'border-box';
+
         playerFields.forEach((field, i) => {
             const div = document.createElement('div');
             div.style.display = 'flex';
@@ -153,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 div.appendChild(removeBtn);
             }
-            wrapper.appendChild(div);
+            playerBody.appendChild(div);
         });
         const addBtn = document.createElement('button');
         addBtn.textContent = '+';
@@ -164,23 +183,29 @@ document.addEventListener('DOMContentLoaded', function() {
             playerFields = values;
             renderPlayerFields();
         };
-        wrapper.appendChild(addBtn);
-        wrapper.appendChild(document.createElement('br'));
-        // Add game mode radio buttons in vertical layout with inline descriptions
-        const modeDiv = document.createElement('div');
-        modeDiv.style.margin = '10px 0';
-        modeDiv.style.display = 'flex';
-        modeDiv.style.flexDirection = 'column';
-        modeDiv.style.alignItems = 'flex-start';
-        modeDiv.style.justifyContent = 'flex-start';
-        modeDiv.style.gap = '8px';
+        playerBody.appendChild(addBtn);
+        playerBody.appendChild(document.createElement('br'));
+        configArea.appendChild(playerBody);
 
-        // Title
+        // Game mode title (same style as player entry)
         const modeLabel = document.createElement('span');
-        modeLabel.textContent = 'Play to:';
+        modeLabel.textContent = 'Game Mode:';
         modeLabel.style.fontWeight = 'bold';
+        modeLabel.style.fontSize = '1.1em';
         modeLabel.style.marginBottom = '6px';
-        modeDiv.appendChild(modeLabel);
+        modeLabel.style.display = 'block';
+        modeLabel.style.width = '100%';
+        modeLabel.style.textAlign = 'left';
+        configArea.appendChild(modeLabel);
+
+        // Game mode body styling
+        const modeBody = document.createElement('div');
+        modeBody.style.background = 'rgba(255,245,240,0.7)';
+        modeBody.style.border = '1px solid #e8c3c3';
+        modeBody.style.borderRadius = '7px';
+        modeBody.style.padding = '12px 16px 10px 16px';
+        modeBody.style.width = '100%';
+        modeBody.style.boxSizing = 'border-box';
 
         // Win mode radio and label (with description inline)
         const winRow = document.createElement('div');
@@ -199,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
         winLabel.style.fontWeight = '500';
         winRow.appendChild(winRadio);
         winRow.appendChild(winLabel);
-        modeDiv.appendChild(winRow);
+        modeBody.appendChild(winRow);
 
         // Lose mode radio and label (with description inline)
         const loseRow = document.createElement('div');
@@ -210,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loseRadio.name = 'gameMode';
         loseRadio.id = 'gameModeLose';
         loseRadio.value = 'loser';
+        // ...existing code...
         const loseLabel = document.createElement('label');
         loseLabel.htmlFor = 'gameModeLose';
         loseLabel.textContent = 'Lose (Loser progresses)';
@@ -217,24 +243,33 @@ document.addEventListener('DOMContentLoaded', function() {
         loseLabel.style.fontWeight = '500';
         loseRow.appendChild(loseRadio);
         loseRow.appendChild(loseLabel);
-        modeDiv.appendChild(loseRow);
-        wrapper.appendChild(modeDiv);
+        modeBody.appendChild(loseRow);
+        configArea.appendChild(modeBody);
+
+        // Add spacing and right-align the Begin Tournament button
+        const btnWrapper = document.createElement('div');
+        btnWrapper.style.width = '100%';
+        btnWrapper.style.display = 'flex';
+        btnWrapper.style.justifyContent = 'flex-end';
+        btnWrapper.style.marginTop = '22px';
+
         const startBtn = document.createElement('button');
         startBtn.textContent = 'Begin Tournament';
         startBtn.type = 'button';
         startBtn.onclick = function() {
             // Only select text inputs for player names
-            const inputs = wrapper.querySelectorAll('input[type="text"]');
+            const inputs = configArea.querySelectorAll('input[type="text"]');
             players = Array.from(inputs).map(inp => inp.value.trim() || inp.placeholder);
-            localStorage.setItem('coinFlipPlayerNames_dynamic', JSON.stringify(players));
-            playerNamesArea.innerHTML = '';
-            // Store game mode in a variable
-            const selectedMode = wrapper.querySelector('input[name="gameMode"]:checked').value;
+            const selectedMode = configArea.querySelector('input[name="gameMode"]:checked').value;
             window.coinFlipGameMode = selectedMode;
+            localStorage.setItem('coinFlipPlayerNames_dynamic', JSON.stringify(players));
+            resultDiv.style.display = '';
+            coin.style.display = '';
+            configArea.innerHTML = '';
             startTournament();
         };
-        wrapper.appendChild(startBtn);
-        playerNamesArea.appendChild(wrapper);
+        btnWrapper.appendChild(startBtn);
+        configArea.appendChild(btnWrapper);
     }
     playerFields = Array(initialPlayers).fill('');
     for (let i = 0; i < prevNames.length; i++) {
@@ -250,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tournamentArea.innerHTML = '';
         coin.style.display = '';
         resultDiv.textContent = '';
+        resultDiv.style.display = '';
         showCoin('heads');
         selectedSide = null;
         showBracket();
@@ -290,9 +326,33 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<div class="bracket-round" style="text-align:center;margin-bottom:1em;"><strong>Round ${r+1}</strong><ul style="list-style:none;padding:0;margin:0;">`;
             for (let m = 0; m < bracketHistory[r].length; m++) {
                 const match = bracketHistory[r][m];
-                html += `<li style="display:flex;align-items:center;justify-content:center;gap:6px;">${match.p1} vs ${match.p2}`;
+                let p1side = match.sides ? match.sides.p1 : '';
+                let p2side = match.sides ? match.sides.p2 : '';
+                let flipResult = match.flipResult ? match.flipResult : '';
+                let coinSVG = '';
+                if (flipResult === 'heads') {
+                    coinSVG = `<span style=\"display:inline-block;width:24px;height:24px;vertical-align:middle;animation:popCoin 0.5s;\">${headsSVG.replace('width=\"100\"', 'width=\"24\"').replace('height=\"100\"', 'height=\"24\"').replace('width="100"', 'width="24"').replace('height="100"', 'height="24"')}</span>`;
+                } else if (flipResult === 'tails') {
+                    coinSVG = `<span style=\"display:inline-block;width:24px;height:24px;vertical-align:middle;animation:popCoin 0.5s;\">${tailsSVG.replace('width=\"100\"', 'width=\"24\"').replace('height=\"100\"', 'height=\"24\"').replace('width="100"', 'width="24"').replace('height="100"', 'height="24"')}</span>`;
+                }
+                html += `<li style=\"display:flex;align-items:center;justify-content:flex-start;gap:18px;padding:8px 0;\">`;
+                html += `<span style=\"min-width:90px;text-align:left;\">${match.p1}`;
+                if (p1side) html += ` <span style=\"font-size:0.95em;color:${p1side==='heads'?'#1a4':'#a41'};font-weight:bold;\">(${p1side==='heads'?'H':'T'})</span>`;
+                html += `</span>`;
+                // Coin toss result in center
+                html += `<span style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:60px;\">`;
+                if (flipResult) {
+                    html += coinSVG;
+                } else {
+                    html += `<span style=\"font-size:1.1em;color:#888;\">?</span>`;
+                }
+                html += `</span>`;
+                html += `<span style=\"min-width:90px;text-align:left;\">${match.p2}`;
+                if (p2side) html += ` <span style=\"font-size:0.95em;color:${p2side==='heads'?'#1a4':'#a41'};font-weight:bold;\">(${p2side==='heads'?'H':'T'})</span>`;
+                html += `</span>`;
+                // Winner highlight
                 if (match.winner) {
-                    html += ` <span style="color:green;display:flex;align-items:center;gap:2px;"><span style="font-size:1.2em;">→</span> <span>${match.winner}</span></span>`;
+                    html += ` <span style=\"color:green;display:flex;align-items:center;gap:2px;\"><span style=\"font-size:1.2em;\">→</span> <span>${match.winner}</span></span>`;
                 }
                 html += `</li>`;
             }
@@ -350,11 +410,31 @@ document.addEventListener('DOMContentLoaded', function() {
         coin.onclick = null;
         document.getElementById('chooseHeads').onclick = function() {
             selectedSide = 'heads';
-            playMatch(matchIdx, matchIdx);
+            // Immediately update bracket diagram with selection
+            if (bracketHistory[round-1] && bracketHistory[round-1][Math.floor(matchIdx/2)]) {
+                bracketHistory[round-1][Math.floor(matchIdx/2)].sides = {
+                    p1: 'heads',
+                    p2: 'tails'
+                };
+            }
+            showBracket();
+            // Show only a brief message under the coin
+            resultDiv.innerHTML = `<b>Match:</b> Selection made. Flipping...`;
+            setTimeout(() => playMatch(matchIdx, matchIdx), 900);
         };
         document.getElementById('chooseTails').onclick = function() {
             selectedSide = 'tails';
-            playMatch(matchIdx, matchIdx);
+            // Immediately update bracket diagram with selection
+            if (bracketHistory[round-1] && bracketHistory[round-1][Math.floor(matchIdx/2)]) {
+                bracketHistory[round-1][Math.floor(matchIdx/2)].sides = {
+                    p1: 'tails',
+                    p2: 'heads'
+                };
+            }
+            showBracket();
+            // Show only a brief message under the coin
+            resultDiv.innerHTML = `<b>Match:</b> Selection made. Flipping...`;
+            setTimeout(() => playMatch(matchIdx, matchIdx), 900);
         };
     }
 
@@ -366,6 +446,13 @@ document.addEventListener('DOMContentLoaded', function() {
         let interval = 600 / flips;
         let currentFace = 'heads';
         let i = 0;
+        // Store side selection in bracketHistory for this match
+        if (bracketHistory[round-1] && bracketHistory[round-1][Math.floor(matchIdx/2)]) {
+            bracketHistory[round-1][Math.floor(matchIdx/2)].sides = {
+                p1: selectedSide,
+                p2: selectedSide === 'heads' ? 'tails' : 'heads'
+            };
+        }
         const flipInterval = setInterval(() => {
             currentFace = currentFace === 'heads' ? 'tails' : 'heads';
             showCoin(currentFace);
@@ -373,7 +460,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (i >= flips) {
                 clearInterval(flipInterval);
                 const isHeads = Math.random() < 0.5;
-                showCoin(isHeads ? 'heads' : 'tails');
+                const flipResult = isHeads ? 'heads' : 'tails';
+                showCoin(flipResult);
                 let chooser = roundPlayers[chooserIdx];
                 let opponent = roundPlayers[matchIdx + (chooserIdx === matchIdx ? 1 : 0)];
                 let progresses;
@@ -386,6 +474,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     progresses = (selectedSide === 'heads' && isHeads) || (selectedSide === 'tails' && !isHeads) ? opponent : chooser;
                 }
                 coin.classList.remove('flipping');
+                // Store coin flip result in bracketHistory
+                if (bracketHistory[round-1] && bracketHistory[round-1][Math.floor(matchIdx/2)]) {
+                    bracketHistory[round-1][Math.floor(matchIdx/2)].flipResult = flipResult;
+                }
                 // Show coin result, then delay before announcing winner/loser
                 setTimeout(() => {
                     if (mode === 'winner') {
